@@ -45,7 +45,7 @@ class MyApp(ctk.CTk):
             'tries_1': 0
         }
 
-        for F in (MainMenu, Guide, CharOut, Level_1_Choice, Results):
+        for F in (MainMenu, Guide, Level_1_Choice, Results):
             page_name = F.__name__
             frame = F(parent=self, controller=self)
             self.frames[page_name] = frame
@@ -78,6 +78,7 @@ class MainMenu(ctk.CTkFrame):
         big_space_font = ctk.CTkFont(family="Impact", size=35)
         text_1_font = ctk.CTkFont(family="Impact", size=30)
         description_font = ctk.CTkFont(family="Impact", size=20)
+        self.toplevel_window = None
 
         top_container = ctk.CTkFrame(self, fg_color='#212121')
         top_container.pack(pady=(0, 0))
@@ -113,12 +114,17 @@ class MainMenu(ctk.CTkFrame):
                                width=170, height=170, font=description_font)
         play_2.grid(row=0, column=1, padx=(50, 50))
         characters = ctk.CTkButton(bottom_container, text="Все\nперсонажи",
-                                   # command=lambda: self.controller.show_frame("Guide"),
+                                   command=self.open_toplevel,
                                    fg_color="#007AFF",
                                    # command=play_sound_event,
                                    hover_color="#0064D1",
                                    width=170, height=170, font=description_font)
         characters.grid(row=0, column=2)
+    def open_toplevel(self):
+        if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
+            self.toplevel_window = AllChars(self, self)
+        else:
+            self.toplevel_window.focus()
 
 
 # Справочник
@@ -159,48 +165,61 @@ class Guide(ctk.CTkFrame):
 
 
 # CharOut
-class CharOut(ctk.CTkFrame):
+class AllChars(ctk.CTkToplevel):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
+        self.geometry("800x800+1000+0")
+        self.title("Димка")
 
         header_font = ctk.CTkFont(family="Impact", size=40)
         text_1_font = ctk.CTkFont(family="Impact", size=30)
         text_2_font = ctk.CTkFont(family="Impact", size=25)
 
-        top_container = ctk.CTkFrame(self)
-        top_container.pack(pady=(0, 0))
+        self.top_container = ctk.CTkFrame(self)
+        self.top_container.pack(pady=(0, 0))
 
-        name_label = ctk.CTkLabel(top_container, text='Справочник', text_color='white',
-                                  bg_color='#212121', font=header_font)
-        name_label.grid(row=0, column=0, sticky="nsew")
-
-        space = ctk.CTkLabel(top_container, text='      ', text_color='white',
-                             bg_color='#212121', font=header_font)
-        space.grid(row=1, column=0, sticky="nsew")
-
-        text = ctk.CTkLabel(top_container,
-                            text='1. Все слова пишутся с маленькой буквы.\n2. Испанские слова пишутся без диакритических знаков.\n2. Испанские слова пишутся без диакритических знаков.\n3. В русских словах вместо "ё" пишется "е".',
-                            text_color='white',
-                            bg_color='#212121', font=text_1_font, justify='left')
-        text.grid(row=2, column=0, sticky="nsew")
-
-        bottom_container = ctk.CTkFrame(self)
-        bottom_container.pack(side="bottom", pady=(0, 700))
-
-        back = ctk.CTkButton(bottom_container, text="Назад",
-                             command=lambda: controller.show_frame("MainMenu"), fg_color=color,
-                             hover_color=hover_color1,
-                             width=350, height=50, font=text_1_font)
-        back.grid(row=0, column=0, sticky="ewsn")
-
-    def char_output(self):
         connection = sqlite3.connect("characters.db")
-        cursor = connection.cursor()
+        self.cursor = connection.cursor()
 
-        cursor.execute(f"SELECT name FROM Nouns WHERE id = 1")
-        word1 = cursor.fetchall()
-        # lvl1_list.extend([word1[0][0], word2[0][0], word3[0][0], word4[0][0], wordru, right_id])
+        self.cursor.execute("SELECT COUNT(*) FROM characters")
+        count = self.cursor.fetchone()[0]
+        for i in range(1, count):
+            self.new_char(i, count)
+
+    def new_char(self, index, count):
+        mexican_border = int(round(count/3, 0))
+        rage_of_the_usa = 0
+        column_buff = 0
+        if index >= mexican_border*2:
+            column_buff += 4
+            rage_of_the_usa = mexican_border*2-1
+        elif index >= mexican_border:
+            column_buff += 2
+            rage_of_the_usa = mexican_border-1
+        self.cursor.execute(
+            f"SELECT id, name, series FROM characters WHERE id = {index}")
+        self.char = self.cursor.fetchall()
+        self.char_id = self.char[0][0]
+        self.char_name = self.char[0][1]
+        self.char_series = self.char[0][2]
+        image = Image.open(f"characters/{self.char_id}.png")
+        #image = Image.open(f"characters/{1}.png")
+        photo = ctk.CTkImage(image, size=(80, 80))
+        image_label = ctk.CTkLabel(self.top_container, image=photo, text="", bg_color='#212121',
+                                   width=80, height=80)
+        print(0+column_buff)
+        image_label.grid(row=(index-rage_of_the_usa), column=(0+column_buff))
+        text_label = ctk.CTkLabel(
+            self.top_container,
+            text=f"{self.char_name}\n{self.char_series}",
+            height=80,
+            width=80
+        )
+        text_label.grid(row=(index-rage_of_the_usa), column=(1 + column_buff))
+
+
+
 
 
 # Уровень "Выбор"
@@ -218,6 +237,7 @@ class Level_1_Choice(ctk.CTkFrame):
 
         # self.lvl1()
         self.widgets()
+
     def true_char_choice(self):
         connection = sqlite3.connect("characters.db")
         cursor = connection.cursor()
@@ -271,7 +291,7 @@ class Level_1_Choice(ctk.CTkFrame):
                                            height=50, font=self.text_2_font)
         self.button_accept.grid(row=3, column=0, sticky="ewsn")
 
-        #self.add_scrollable_frame()
+        # self.add_scrollable_frame()
 
         self.widget_counter = 0
 
@@ -472,7 +492,7 @@ class Level_1_Choice(ctk.CTkFrame):
 
             else:
                 self.true_char_choice()
-                #self.scrollable_frame.destroy()
+                # self.scrollable_frame.destroy()
                 self.scrollable_frame.pack_forget()
                 self.entry_name.delete(0, "end")
                 self.controller.show_frame("Results", self.widget_counter)
