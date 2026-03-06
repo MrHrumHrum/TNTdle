@@ -2,8 +2,7 @@ import random
 import sqlite3
 import customtkinter as ctk
 from PIL import Image
-
-# from playsound import playsound
+from playsound import playsound
 
 lvl1_list = []
 lvl2_list = []
@@ -42,7 +41,7 @@ class MyApp(ctk.CTk):
         #     'tries_1': 0
         # }
 
-        for F in (MainMenu, LevelClassic, Results):
+        for F in (MainMenu, LevelClassic, LevelQuote, Results):
             page_name = F.__name__
             frame = F(parent=self, controller=self)
             self.frames[page_name] = frame
@@ -53,7 +52,7 @@ class MyApp(ctk.CTk):
     def show_frame(self, page_name, attempts=None):
         frame = self.frames[page_name]
         frame.tkraise()
-        if page_name == 'LevelClassic':
+        if page_name == 'LevelClassic' or page_name == 'LevelQuote':
             if hasattr(frame, 'add_scrollable_frame'):
                 frame.add_scrollable_frame()
         if hasattr(frame, 'show'):
@@ -98,8 +97,7 @@ class MainMenu(ctk.CTkFrame):
         play_1.grid(row=0, column=0)
 
         play_2 = ctk.CTkButton(bottom_container, text="Угадать по\nцитате",
-                               # command=lambda: self.controller.show_frame("Guide"),
-                               fg_color="#F10C21",
+                               command=lambda: self.controller.show_frame("LevelQuote"), fg_color="#F10C21",
                                # command=play_sound_event,
                                hover_color="#C90A1C", width=170, height=170, font=description_font)
         play_2.grid(row=0, column=1, padx=(50, 50))
@@ -247,17 +245,23 @@ class LevelClassic(ctk.CTkFrame):
 
         self.top_container = ctk.CTkFrame(self, fg_color='#212121')
         self.top_container.pack(pady=(0, 0))
+        self.button_exit = ctk.CTkButton(self, text='X', command=lambda: self.controller.show_frame("MainMenu"),
+                                         text_color='black',
+                                         fg_color="#F10C21", hover_color="#C90A1C",
+                                         width=50, height=50,
+                                         font=self.text_2_font, corner_radius=10)
+        self.button_exit.place(x=730, y=20)
         self.button_chars = ctk.CTkButton(self, text='?', command=lambda: AllChars(self, self), text_color='black',
                                           fg_color='#ffdfa7', hover_color='#ae6f12',
-                                          bg_color='#212121', width=25, height=25,
-                                          font=self.text_2_font, corner_radius=180)
-        self.button_chars.place(x=750, y=20)
+                                          width=50, height=50,
+                                          font=self.text_2_font, corner_radius=10)
+        self.button_chars.place(x=730, y=80)
 
-        self.title = ctk.CTkLabel(self.top_container, text="Угадывание персонажа по его\nхарактеристикам",
+        self.title = ctk.CTkLabel(self.top_container, text="Угадывание персонажа по его\nХАРАКТЕРИСТИКАМ",
                                   text_color='white', font=self.text_1_font)
         self.title.grid(row=1, column=0, sticky="nsew", pady=(10, 0))
 
-        self.entry_name = ctk.CTkEntry(self.top_container, width=400,
+        self.entry_name = ctk.CTkEntry(self.top_container, width=400, placeholder_text='Введите имя персонажа...',
                                        text_color='white', bg_color='#212121', font=self.text_1_font)
         self.entry_name.grid(row=2, column=0, pady=20)
 
@@ -489,19 +493,18 @@ class LevelQuote(ctk.CTkFrame):
         rcount = random.randint(1, count)
 
         cursor.execute(
-            f"SELECT id, name, series FROM characters WHERE id = {rcount}")
+            f"SELECT id, name, series, quote FROM characters WHERE id = {rcount}")
         self.true_char = cursor.fetchall()
         print(self.true_char)
         print(self.true_char[0])
         self.true_char_id = self.true_char[0][0]
         self.true_char_name = self.true_char[0][1]
         self.true_char_series = self.true_char[0][2]
+        self.true_char_quote = self.true_char[0][3]
 
     def add_scrollable_frame(self):
         self.scrollable_frame = ctk.CTkScrollableFrame(self, width=650, height=300)
-        # self.scrollable_frame.configure(height=200)
         self.scrollable_frame.pack(padx=10, pady=10, fill="both")
-        # self.scrollable_frame.grid(row=4, column=0, sticky="ewsn")
 
         ctk.CTkLabel(self.scrollable_frame, text=f"Фото\nперсонажа",
                      font=self.features, fg_color="#007AFF", corner_radius=6,
@@ -518,28 +521,37 @@ class LevelQuote(ctk.CTkFrame):
 
         self.top_container = ctk.CTkFrame(self, fg_color='#212121')
         self.top_container.pack(pady=(0, 0))
+        self.button_exit = ctk.CTkButton(self, text='X', command=lambda: self.controller.show_frame("MainMenu"), text_color='black',
+                                         fg_color="#F10C21", hover_color="#C90A1C",
+                                         width=50, height=50,
+                                         font=self.text_2_font, corner_radius=10)
+        self.button_exit.place(x=730, y=20)
         self.button_chars = ctk.CTkButton(self, text='?', command=lambda: AllChars(self, self), text_color='black',
                                           fg_color='#ffdfa7', hover_color='#ae6f12',
-                                          bg_color='#212121', width=25, height=25,
-                                          font=self.text_2_font, corner_radius=180)
-        self.button_chars.place(x=750, y=20)
+                                          width=50, height=50,
+                                          font=self.text_2_font, corner_radius=10)
+        self.button_chars.place(x=730, y=80)
 
-        self.title = ctk.CTkLabel(self.top_container, text="Угадывание персонажа по его\nЦИТАТЕ",
-                                  text_color='white', font=self.text_1_font)
+
+        self.title = ctk.CTkLabel(self.top_container, text="Угадай персонажа по цитате:",
+                                  text_color='white', font=self.text_2_font)
         self.title.grid(row=1, column=0, sticky="nsew", pady=(10, 0))
+        self.title = ctk.CTkLabel(self.top_container, text=self.true_char_quote,
+                                  text_color='gold', font=self.text_1_font)
+        self.title.grid(row=2, column=0, sticky="nsew", pady=(10, 0))
 
-        self.entry_name = ctk.CTkEntry(self.top_container, width=400,
-                                       text_color='white', bg_color='#212121', font=self.text_1_font)
-        self.entry_name.grid(row=2, column=0, pady=20)
+        self.entry_name = ctk.CTkEntry(self.top_container, width=400, placeholder_text='Введите имя персонажа...',
+                                       text_color='white', bg_color='#212121', font=self.text_2_font)
+        self.entry_name.grid(row=3, column=0, pady=20)
 
         self.button_accept = ctk.CTkButton(self.top_container, text='Проверить догадку',
                                            command=self.add_widget, fg_color="#007AFF",
                                            hover_color="#0064D1", bg_color='#212121', width=400,
                                            height=30, font=self.text_2_font)
-        self.button_accept.grid(row=3, column=0)
+        self.button_accept.grid(row=4, column=0)
         self.error_msg = ctk.CTkLabel(self.top_container, text="",
-                                      text_color='white', font=self.text_1_font)
-        self.error_msg.grid(row=4, column=0, sticky="nsew", pady=(10, 0))
+                                      text_color='white', font=self.text_2_font)
+        self.error_msg.grid(row=5, column=0, sticky="nsew", pady=(10, 0))
 
         # self.add_scrollable_frame()
 
@@ -559,6 +571,12 @@ class LevelQuote(ctk.CTkFrame):
             print(char_id)
             print(char_name)
             self.widget_counter += 1
+            if self.widget_counter == 5:
+                self.button_sound = ctk.CTkButton(self.top_container, text='Звуковая подсказка',
+                                                  command=lambda: playsound('sfx/11.mp3'), fg_color="#007AFF",
+                                                  hover_color="#0064D1", bg_color='#212121', width=400,
+                                                  height=30, font=self.text_2_font)
+                self.button_sound.grid(row=6, column=0)
 
             if text != self.true_char_name:
                 image = Image.open(f"characters/{char_id}.png")

@@ -1,6 +1,5 @@
 import customtkinter as ctk
-from customtkinter import *
-from PIL import Image, ImageTk
+from PIL import Image
 import sqlite3
 from random import *
 import random
