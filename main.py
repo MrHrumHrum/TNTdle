@@ -110,11 +110,12 @@ class AllChars(ctk.CTkToplevel):
         super().__init__(parent)
         self.controller = controller
         self.geometry("800x800+1000+0")
-        self.title("Димка")
+        self.title("Все персонажи")
 
         header_font = ctk.CTkFont(family="Impact", size=40)
         text_1_font = ctk.CTkFont(family="Impact", size=30)
-        text_2_font = ctk.CTkFont(family="Impact", size=25)
+        self.text_2_font = ctk.CTkFont(family="Impact", size=25)
+        self.mini_font = ctk.CTkFont(family="Impact", size=12)
 
         self.top_container = ctk.CTkFrame(self)
         self.top_container.pack(pady=(0, 0))
@@ -151,8 +152,7 @@ class AllChars(ctk.CTkToplevel):
         text_label = ctk.CTkLabel(
             self.top_container,
             text=f"{self.char_name}\n{self.char_series}",
-            height=80,
-            width=80
+            height=80, width=80, font=self.mini_font
         )
         text_label.grid(row=(index - rage_of_the_usa), column=(1 + column_buff))
 
